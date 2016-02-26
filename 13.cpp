@@ -18,6 +18,7 @@ void program(int , int , int , int , int , int [][buffer_limit],char []);
 double get_result(double,double,char);
 bool check_finish(int [][buffer_limit] , int );
 void output_ver_1(char []);
+void make_sentence(char []);
 
 char sentence[buffer_limit],stack[buffer_limit];
 int top;
@@ -37,7 +38,7 @@ void output_ver_1(char buffer[])
 void process()
 {
 	char buffer[buffer_limit] = {'\0',};
-	int math_sentence[3][buffer_limit] = {0,};//1 : ½ÇÁ¦ °ª , 2 : ±âÈ£
+	int math_sentence[3][buffer_limit] = {0,};//1 : ì‹¤ì œ ê°’ , 2 : ê¸°í˜¸
 	postfix_operators(buffer);
 	translation(buffer,math_sentence);
 	calculate(math_sentence , strlen(buffer) , buffer);
@@ -135,7 +136,7 @@ void calculate(int math[][buffer_limit] , int length , char buffer[])
 	int left[buffer_limit] = {'\0',} , right[buffer_limit] = {'\0',};
 	int left_point , right_point , operator_point,i,t,str_length = length , left_gap , right_gap;
 	bool oper = false,running = true;
-	while(running)//¸ŞÀÎ ·çÇÁ
+	while(running)//ë©”ì¸ ë£¨í”„
 	{
 		left_point = -1;
 		right_point = -1;
@@ -145,7 +146,7 @@ void calculate(int math[][buffer_limit] , int length , char buffer[])
 		{
 			if(math[2][i] == 5 || i == str_length )
 			{
-				if(oper == false)//ÇØ´ç ÆÄÆ®´Â ¿¬»êÀÚ°¡ ¾Æ´Ô
+				if(oper == false)//í•´ë‹¹ íŒŒíŠ¸ëŠ” ì—°ì‚°ìê°€ ì•„ë‹˜
 				{
 					if(left_point == -1)
 					{
@@ -342,6 +343,9 @@ void postfix_operators(char buffer[])
 				}
 				buffer[t] = pop();
 				t+=1;
+
+				buffer[t] = '|';
+				t+=1;
 			}
 		}
 		else if(sentence[i] != ' ')
@@ -384,9 +388,12 @@ void postfix_operators(char buffer[])
 						}
 						else if(operator_rank(get_top()) >= operator_rank(sentence[i]))
 						{
-							if(operator_rank(get_top()) < 4) // '(' ´Â »çÄ¢¿¬»êÀÌ »¬¼ö ¾øÀ½
+							if(operator_rank(get_top()) < 4) // '(' ëŠ” ì‚¬ì¹™ì—°ì‚°ì´ ëº„ìˆ˜ ì—†ìŒ
 							{
 								buffer[t] = pop();
+								t+=1;
+
+								buffer[t] = '|';
 								t+=1;
 							}
 							else
@@ -407,6 +414,11 @@ void postfix_operators(char buffer[])
 			}
 		}
 	}
+	if(buffer[strlen(buffer)-1] == '|')
+	{
+		buffer[strlen(buffer)-1] = '\0';
+	}
+
 	printf("postfix_operators : %s\n",buffer);
 }
 
@@ -414,5 +426,37 @@ void input()
 {
 	freopen("input.txt","r",stdin);
 	scanf("%[^\n]s",sentence);
+	make_sentence(sentence);
 	printf("origin : %s\n",sentence);
+}
+
+void make_sentence(char target[])
+{
+	int i,t,cnt = -1, str_length = strlen(target);
+	bool jump = false;
+	for(i=0;i<str_length;i+=1)
+	{
+		if(operator_rank(target[i]) == 2 )
+		{
+			cnt +=1;
+			if(cnt == 1)
+			{
+				str_length = str_length + 1;
+				for(t=str_length - 1; t>i+1;t-=1)
+				{
+					target[t] = target[t-1];
+					target[t-1] = ' ';
+				}
+				i = i + 1;
+			}
+		}
+		if(target[i] != ' ' && operator_rank(target[i]) == 5)
+		{
+			cnt = 0;// + +1
+		}
+		if(operator_rank(target[i]) == 1 || operator_rank(target[i]) == 4 || operator_rank(target[i]) == 3)
+		{
+			cnt = -1;
+		}
+	}
 }
