@@ -4,6 +4,7 @@
 
 #define buffer_limit 1000
 #define ver 1
+#define calculate_fail 60
 
 void input();
 void process();
@@ -21,7 +22,7 @@ void output_ver_1(char []);
 void make_sentence(char []);
 
 char sentence[buffer_limit],stack[buffer_limit];
-int top;
+int top,failure;
 
 int main()
 {
@@ -32,7 +33,14 @@ int main()
 
 void output_ver_1(char buffer[])
 {
-	printf("total : %f\n",atof(buffer));
+	if(failure== 0)
+	{
+		printf("total : %f\n",atof(buffer));
+	}
+	else
+	{
+		printf("Fail\n");
+	}
 }
 
 void process()
@@ -54,6 +62,8 @@ void program(int left_point,int left_size , int right_point , int right_size , i
 		double a , b ,result;
 		char op ;
 		t = 0;
+		op = buffer[operator_point];
+
 		for(i=left_point ; i<=left_point + left_size - 1;i+=1)
 		{
 			target_a[t] = buffer[i];
@@ -61,14 +71,33 @@ void program(int left_point,int left_size , int right_point , int right_size , i
 		}
 		t=0;
 		a = atof(target_a);
-		for(i=right_point ; i<=right_point + right_size - 1 ;i+=1)
+		if(right_point != -1)
 		{
-			target_b[t] = buffer[i];
-			t+=1;
+			for(i=right_point ; i<=right_point + right_size - 1 ;i+=1)
+			{
+				target_b[t] = buffer[i];
+				t+=1;
+			}
+			b = atof(target_b);
+			result = get_result(a,b,op);
 		}
-		b = atof(target_b);
-		op = buffer[operator_point];
-		result = get_result(a,b,op);
+		else
+		{
+			if(op == '+')
+			{
+				result = get_result(a,1.0,'*');
+			}
+			else if(op == '-')
+			{
+				result = get_result(a,-1.0,'*');
+			}
+			else
+			{
+				result = 0;
+				failure = 1;
+			}
+		}
+
 
 		printf("%f ",result);
 
@@ -134,10 +163,16 @@ bool check_finish(int math[][buffer_limit], int length)
 void calculate(int math[][buffer_limit] , int length , char buffer[])
 {
 	int left[buffer_limit] = {'\0',} , right[buffer_limit] = {'\0',};
-	int left_point , right_point , operator_point,i,t,str_length = length , left_gap , right_gap;
+	int left_point , right_point , operator_point,i,t,str_length = length , left_gap , right_gap,cal_cnt = 0;
 	bool oper = false,running = true;
 	while(running)//메인 루프
 	{
+		if(cal_cnt > calculate_fail)
+		{
+			failure = 1;
+			break;
+		}
+		cal_cnt+=1;
 		left_point = -1;
 		right_point = -1;
 		operator_point = -1;
@@ -224,7 +259,13 @@ void calculate(int math[][buffer_limit] , int length , char buffer[])
 						operator_point = -1;
 						break;
 					}
-
+					if(i>=str_length-1 && left_point != -1 && right_point == -1)
+					{
+						operator_point = i-1;
+						program(left_point,left_gap,right_point,right_gap,operator_point,math,buffer);
+						running = false;
+						break;
+					}
 				}
 				oper = true;
 			}
@@ -424,6 +465,7 @@ void postfix_operators(char buffer[])
 
 void input()
 {
+	failure = 0;
 	freopen("input.txt","r",stdin);
 	scanf("%[^\n]s",sentence);
 	make_sentence(sentence);
